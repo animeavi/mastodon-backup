@@ -96,6 +96,7 @@ class App:
         self.scopes = scopes
         self.client_secret = self.domain + ".client.secret"
         self.user_secret = self.domain + ".user." + self.username + ".secret"
+        self.user_secret2 = self.domain + ".user.secret"
 
     def register(self):
         """
@@ -179,9 +180,13 @@ class App:
         url = self.url
         client_secret = self.client_secret
         user_secret = self.user_secret
+        user_secret2 = self.user_secret2
 
         if not os.path.isfile(client_secret):
             self.register()
+
+        if not os.path.isfile(user_secret) and os.path.isfile(user_secret2):
+            user_secret = user_secret2
 
         if not os.path.isfile(user_secret):
             mastodon = self.authorize()
