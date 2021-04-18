@@ -69,6 +69,8 @@ def main():
                                 help='avoid timeouts and pace requests')
     parser_content.add_argument("user",
                                 help='your account, e.g. kensanata@octogon.social')
+    parser_content.add_argument("--id", dest='id', default='0',
+                                help='the id of the account you want to archive')
     parser_content.set_defaults(command=archive.archive)
 
 

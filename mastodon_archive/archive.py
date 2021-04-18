@@ -54,7 +54,10 @@ def archive(args):
     print("Get user info")
 
     try:
-        user = mastodon.account_verify_credentials()
+        if args.id == '0':
+            user = mastodon.account_verify_credentials()
+        else:
+            user = mastodon.account(args.id)
     except Exception as e:
         if "access token was revoked" in str(e):
             core.deauthorize(args)
