@@ -71,6 +71,10 @@ def main():
                                 help='your account, e.g. kensanata@octogon.social')
     parser_content.add_argument("--id", dest='id', default='0',
                                 help='the id of the account you want to archive')
+    parser_content.add_argument("--include-dms", dest='include_dms',
+                                action='store_const',
+                                const=True, default=False,
+                                help='Include Direct Messages in the archive')
     parser_content.set_defaults(command=archive.archive)
 
 

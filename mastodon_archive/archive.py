@@ -43,6 +43,7 @@ def archive(args):
     with_followers = args.with_followers
     with_following = args.with_following
     stopping = args.stopping
+    include_dms = args.include_dms
 
     (username, domain) = core.parse(args.user)
 
@@ -129,11 +130,15 @@ def archive(args):
     def keep_mentions(notifications):
         return [x.status for x in notifications if x.type == "mention"]
 
+    def remove_dms(statuses):
+        return [x for x in statuses if x.visibility != "direct"]
+
     if data is None or not "statuses" in data or len(data["statuses"]) == 0:
         print("Get all statuses (this may take a while)")
         statuses = mastodon.account_statuses(user["id"], limit=100)
-        statuses = mastodon.fetch_remaining(
-            first_page = statuses)
+        statuses = mastodon.fetch_remaining(first_page = statuses)
+        if not include_dms:
+            statuses = remove_dms(statuses)
     else:
         print("Get new statuses")
         statuses = complete(data["statuses"], mastodon.account_statuses(user["id"], limit=100))
