@@ -18,11 +18,13 @@ import sys
 import os.path
 from . import core
 
+
 def progress_bar(chars="▏▎▍▌▋▊▉█"):
     """
     Return a progress bar updater which you can then call.
     """
     n = 0
+
     def progress():
         nonlocal n
         if n != 0:
@@ -32,6 +34,7 @@ def progress_bar(chars="▏▎▍▌▋▊▉█"):
         n = (n + 1) % len(chars)
 
     return progress
+
 
 def archive(args):
     """
@@ -48,6 +51,10 @@ def archive(args):
     (username, domain) = core.parse(args.user)
 
     status_file = domain + '.user.' + username + '.json'
+    if args.id != '0':
+        (username2, domain2) = core.parse(args.id)
+        status_file = domain2 + '.user.' + username2 + '.json'
+
     data = core.load(status_file)
 
     mastodon = core.login(args)
@@ -62,18 +69,18 @@ def archive(args):
     except Exception as e:
         if "access token was revoked" in str(e):
             core.deauthorize(args)
-             # retry and exit without an error
+            # retry and exit without an error
             archive(args)
             sys.exit(0)
         elif "Name or service not known" in str(e):
             print("Error: the instance name is either misspelled or offline",
-              file=sys.stderr)
+                  file=sys.stderr)
         else:
             print(e, file=sys.stderr)
         # exit in either case
         sys.exit(1)
 
-    def complete(statuses, page, func = None):
+    def complete(statuses, page, func=None):
         """
         Why aren't we using Mastodon.fetch_remaining(first_page)? It
         requires some metadata for the next request to be known. This
@@ -87,7 +94,7 @@ def archive(args):
         keys. That's why we fetch it all over again. Expiry helps,
         obviously.
         """
-        seen = { str(status["id"]): status for status in statuses }
+        seen = {str(status["id"]): status for status in statuses}
         progress = progress_bar()
 
         # define function such that we can return from the inner and
@@ -112,13 +119,13 @@ def archive(args):
                         else:
                             duplicates = duplicates + 1
                             if duplicates > 10 and stopping:
-                                print() # at the end of the progress bar
+                                print()  # at the end of the progress bar
                                 print("Seen 10 duplicates, stopping now.")
                                 print("Use --no-stopping to prevent this.")
                                 return count
                 page = mastodon.fetch_next(page)
                 if page is None:
-                    print() # at the end of the progress bar
+                    print()  # at the end of the progress bar
                     return count
             # if len(page) was 0
             return count
@@ -136,12 +143,13 @@ def archive(args):
     if data is None or not "statuses" in data or len(data["statuses"]) == 0:
         print("Get all statuses (this may take a while)")
         statuses = mastodon.account_statuses(user["id"], limit=100)
-        statuses = mastodon.fetch_remaining(first_page = statuses)
+        statuses = mastodon.fetch_remaining(first_page=statuses)
         if not include_dms:
             statuses = remove_dms(statuses)
     else:
         print("Get new statuses")
-        statuses = complete(data["statuses"], mastodon.account_statuses(user["id"], limit=100))
+        statuses = complete(
+            data["statuses"], mastodon.account_statuses(user["id"], limit=100))
 
     if skip_favourites:
         print("Skipping favourites")
@@ -153,7 +161,7 @@ def archive(args):
         print("Get favourites (this may take a while)")
         favourites = mastodon.favourites()
         favourites = mastodon.fetch_remaining(
-            first_page = favourites)
+            first_page=favourites)
     else:
         print("Get new favourites")
         favourites = complete(data["favourites"], mastodon.favourites())
@@ -168,12 +176,13 @@ def archive(args):
         print("Get notifications and look for mentions (this may take a while)")
         notifications = mastodon.notifications(limit=100)
         notifications = mastodon.fetch_remaining(
-            first_page = notifications)
+            first_page=notifications)
         mentions = keep_mentions(notifications)
     else:
         print("Get new notifications and look for mentions")
-        is_mention = lambda x: "type" in x and x["type"] == "mention"
-        mentions = complete(data["mentions"], mastodon.notifications(limit=100), is_mention)
+        def is_mention(x): return "type" in x and x["type"] == "mention"
+        mentions = complete(
+            data["mentions"], mastodon.notifications(limit=100), is_mention)
 
     if not with_followers:
         print("Skipping followers")
@@ -185,7 +194,7 @@ def archive(args):
         print("Get followers (this may take a while)")
         followers = mastodon.account_followers(user.id, limit=100)
         followers = mastodon.fetch_remaining(
-            first_page = followers)
+            first_page=followers)
 
     if not with_following:
         print("Skipping following")
@@ -197,7 +206,7 @@ def archive(args):
         print("Get following (this may take a while)")
         following = mastodon.account_following(user.id, limit=100)
         following = mastodon.fetch_remaining(
-            first_page = following)
+            first_page=following)
 
     data = {
         'account': user,
